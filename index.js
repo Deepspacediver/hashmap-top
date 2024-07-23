@@ -1,12 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const linked_list_1 = require("./linked-list");
-const HashMap = (length = 16, loadFactor = 0.8) => {
-    const maxCapacity = Math.floor(length * loadFactor);
-    const hashMap = [];
+const HashMap = (hashHapLength = 16, loadFactor = 0.75) => {
+    let maxLength = hashHapLength;
+    let maxCapacity = Math.floor(maxLength * loadFactor);
+    let hashMap = [];
     const getHashMapSize = () => hashMap.reduce((nodeCount, linkedList) => {
         return nodeCount + linkedList?.size() ?? 0;
     }, 0);
+    const isTimeToGrowHashMap = () => maxCapacity <= getHashMapSize();
     const keyToHash = (key) => {
         let hashCode = 0;
         const PRIME_NUMBER = 31;
@@ -20,10 +22,13 @@ const HashMap = (length = 16, loadFactor = 0.8) => {
         return getHashIndex(hashedKey);
     };
     const getHashIndex = (hash) => {
-        const HASH_DIVIDER = 16;
-        return hash % HASH_DIVIDER;
+        return hash % maxLength;
     };
     const set = (key, value) => {
+        if (isTimeToGrowHashMap()) {
+            console.log('called');
+            growHashMap();
+        }
         const indexForHashedKey = getHashedKeyIndex(key);
         const bucket = hashMap[indexForHashedKey];
         if (!bucket) {
@@ -45,7 +50,7 @@ const HashMap = (length = 16, loadFactor = 0.8) => {
         const keyIndex = getHashedKeyIndex(key);
         const bucket = hashMap[keyIndex];
         const nodeIndex = bucket.find(key);
-        if (!nodeIndex) {
+        if (nodeIndex === null || !bucket) {
             return null;
         }
         const nodeInBucket = bucket.at(nodeIndex);
@@ -61,21 +66,103 @@ const HashMap = (length = 16, loadFactor = 0.8) => {
         const nodeInBucket = bucket.find(key);
         return nodeInBucket !== null;
     };
+    const remove = (key) => {
+        const hashIndex = getHashedKeyIndex(key);
+        const bucket = hashMap[hashIndex];
+        if (!bucket || !bucket?.contains(key)) {
+            return false;
+        }
+        const nodeIndexInBucket = bucket.find(key);
+        if (nodeIndexInBucket === null) {
+            return false;
+        }
+        bucket.removeAt(nodeIndexInBucket);
+        return true;
+    };
+    const length = () => {
+        return hashMap.reduce((count, node) => count + node.size(), 0);
+    };
+    const clear = () => {
+        hashMap.length = 0;
+    };
+    const keys = () => {
+        return hashMap.flatMap((bucket) => {
+            let currentNode = bucket.getLinkedList();
+            const keysInLinkedList = [];
+            while (!!currentNode) {
+                const [key] = currentNode.value ?? [null];
+                keysInLinkedList.push(key);
+                currentNode = currentNode.next;
+            }
+            return keysInLinkedList;
+        });
+    };
+    const values = () => {
+        return hashMap.flatMap((bucket) => {
+            let currentNode = bucket.getLinkedList();
+            const valuesInLinkedList = [];
+            while (!!currentNode) {
+                const [_, value] = currentNode.value ?? [null, null];
+                valuesInLinkedList.push(value);
+                currentNode = currentNode.next;
+            }
+            return valuesInLinkedList;
+        });
+    };
+    const entries = () => {
+        return hashMap.flatMap((bucket) => {
+            let currentNode = bucket.getLinkedList();
+            const entriesInLinkedList = [];
+            while (!!currentNode) {
+                entriesInLinkedList.push(currentNode.value);
+                currentNode = currentNode.next;
+            }
+            return entriesInLinkedList;
+        });
+    };
+    const growHashMap = () => {
+        const oldHash = hashMap;
+        hashMap = [];
+        maxLength *= 2;
+        maxCapacity = Math.floor(maxLength * loadFactor);
+        oldHash.forEach((bucket) => {
+            let currentNode = bucket.getLinkedList();
+            while (!!currentNode) {
+                const [key, value] = currentNode.value ?? ['', ''];
+                set(key, value);
+                currentNode = currentNode.next;
+            }
+        });
+    };
     const getHashMap = () => hashMap;
     return {
-        keyToHash,
-        hashMap,
         set,
         getHashMap,
         getHashMapSize,
         get,
         has,
-        maxCapacity
+        remove,
+        length,
+        clear,
+        keys, values, entries,
     };
 };
-const myHashMap = HashMap();
-myHashMap.set('saRa', 'value');
-myHashMap.set('raSa', 'old value');
-myHashMap.set('raSa', 'new value');
-console.log(myHashMap.get('raSa'), myHashMap.has('raSa'));
+const test = HashMap();
+test.set('apple', 'red');
+test.set('banana', 'yellow');
+test.set('carrot', 'orange');
+test.set('dog', 'brown');
+test.set('elephant', 'gray');
+test.set('frog', 'green');
+test.set('grape', 'purple');
+test.set('hat', 'black');
+test.set('ice cream', 'white');
+test.set('jacket', 'blue');
+test.set('kite', 'pink');
+test.set('lion', 'golden');
+console.log(test.getHashMap().map((bucket) => bucket.getLinkedList()));
+console.log(test.getHashMapSize());
+test.set('moon', 'silver');
+// console.log(test.getHashMapSize(), test.getHashMapCurrentMaxCapacity(), test.isTimeToGrowHashMap());
+console.log(test.getHashMap().map((bucket) => bucket.getLinkedList()));
 //# sourceMappingURL=index.js.map
