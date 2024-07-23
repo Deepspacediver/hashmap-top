@@ -114,7 +114,6 @@ export const LinkedList = (value?: KeyValuePair) => {
             return false;
         }
 
-
         while (currentNode) {
             const [currentValue] = currentNode.value ?? [''];
             if (!!currentValue && currentValue === key) {
@@ -141,6 +140,21 @@ export const LinkedList = (value?: KeyValuePair) => {
         return null;
     };
 
+    const removeAt = (nodeIndexForDeletion: number) => {
+        if (nodeIndexForDeletion === 0) {
+            list = list?.next ?? null;
+            return;
+        }
+        const previousNodeIndex = nodeIndexForDeletion - 1;
+        const previousNode = at(previousNodeIndex);
+        const nodeToBeDeleted = at(nodeIndexForDeletion);
+        if (!previousNode || !nodeToBeDeleted) {
+            return;
+        }
+        previousNode.next = nodeToBeDeleted.next;
+
+    };
+
     return {
         append,
         traverseToLastNode,
@@ -152,7 +166,8 @@ export const LinkedList = (value?: KeyValuePair) => {
         at,
         pop,
         contains,
-        find
+        find,
+        removeAt,
     };
 };
 
